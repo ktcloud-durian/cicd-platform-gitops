@@ -6,7 +6,7 @@ resources:
 images:
   - name: app
     newName: ghcr.io/ktcloud-durian/ktcloud_durian
-    newTag: 4488fa0
+    newTag: fa44e47
 replicas:
   - name: sample-app
     count: 2
