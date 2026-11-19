@@ -1,0 +1,57 @@
+# SRV-06 NetworkPolicy — 기본은 전부 막고 필요한 것만 연다 (담당: 보안 송윤지)
+# 1) 이 네임스페이스의 모든 Pod: 들어오고 나가는 통신 기본 차단
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+---
+# 2) 앱 Pod로 들어오는 것: 인그레스 컨트롤러(k3s 기본 Traefik, kube-system)에서 3000번만
+#    ALB가 Traefik을 거치지 않고 노드로 바로 보내는 구조로 정해지면 이 규칙을 다시 맞춤
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sample-app-allow-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app: sample-app
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+# 3) 앱 Pod에서 나가는 것: DNS만. 내부 API가 생기면 그 주소·포트만 추가
+#    AWS 클러스터의 앱은 온프렘 DB(3306)로 직접 나가지 않음 (DAT-04)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sample-app-allow-egress-dns
+spec:
+  podSelector:
+    matchLabels:
+      app: sample-app
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
