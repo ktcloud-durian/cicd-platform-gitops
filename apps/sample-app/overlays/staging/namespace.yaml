@@ -1,0 +1,10 @@
+# Pod Security Admission — restricted 기준을 강제 (SRV-04). 기준에 안 맞는 Pod는 생성 자체가 거부됨
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
