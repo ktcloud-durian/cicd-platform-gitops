@@ -8,4 +8,4 @@ resources:
 images:
   - name: app
     newName: ghcr.io/ktcloud-durian/ktcloud_durian
-    newTag: fa44e47
+    newTag: 67e9c7c
