@@ -20,4 +20,4 @@ configMapGenerator:
 images:
   - name: durian-bank-core-api
     newName: ghcr.io/ktcloud-durian/durian-bank-core-api
-    newTag: CHANGE-ME
+    newTag: e7b69fe
