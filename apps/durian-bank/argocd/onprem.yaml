@@ -1,0 +1,19 @@
+# 온프렘 k3s의 ArgoCD에 등록 (core-api, pull 배포)
+# 처음에는 수동 Sync. 주소·태그를 채우고 화면에서 확인한 뒤 Sync
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: durian-bank-onprem
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ktcloud-durian/cicd-platform-gitops.git
+    targetRevision: main
+    path: apps/durian-bank/overlays/onprem
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: durian-bank
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
