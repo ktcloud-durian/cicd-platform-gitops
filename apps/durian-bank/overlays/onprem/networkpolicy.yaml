@@ -1,0 +1,47 @@
+# SRV-06: 기본 전부 차단, 필요한 것만 엶
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+---
+# 들어오는 것: k3s 노드 대역(Tailscale 서브넷 라우터 워커가 출발지를 자기 주소로 바꿔서 들어옴)에서 4000번만
+# 서비스 토큰이 없으면 core-api가 401로 거절함 (DAT-05)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: core-api-allow-ingress
+spec:
+  podSelector:
+    matchLabels: { app: durian-bank-core-api }
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.30.20.0/24 }
+      ports:
+        - { protocol: TCP, port: 4000 }
+---
+# 나가는 것: DNS + 고객 DB VM 하나(3306)만 (DAT-04). DB 주소는 kustomization.yaml DB_HOST와 같이 바꿈
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: core-api-allow-egress
+spec:
+  podSelector:
+    matchLabels: { app: durian-bank-core-api }
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { k8s-app: kube-dns }
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:
+        - ipBlock: { cidr: 10.30.40.10/32 }
+      ports:
+        - { protocol: TCP, port: 3306 }
