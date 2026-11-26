@@ -1,0 +1,50 @@
+# SRV-06: 기본 전부 차단, 필요한 것만 엶
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+---
+# 들어오는 것: Traefik(kube-system)에서 3000번만
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-allow-ingress
+spec:
+  podSelector:
+    matchLabels: { app: durian-bank-web }
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { app.kubernetes.io/name: traefik }
+      ports:
+        - { protocol: TCP, port: 3000 }
+---
+# 나가는 것: DNS + 온프렘 core-api 주소 하나(4000)만. 고객 DB 3306으로는 못 나감 (DAT-04)
+# core-api MetalLB 주소/32 (방화벽 정책 정의서 10.1 3번). 바꾸면 kustomization.yaml CORE_API_URL도 같이
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-allow-egress
+spec:
+  podSelector:
+    matchLabels: { app: durian-bank-web }
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { k8s-app: kube-dns }
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:
+        - ipBlock: { cidr: 10.30.20.200/32 }
+      ports:
+        - { protocol: TCP, port: 4000 }

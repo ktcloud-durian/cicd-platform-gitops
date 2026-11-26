@@ -1,0 +1,68 @@
+# core-api: 고객·계좌·거래를 다루는 내부 API (OpenStack k3s). 고객 DB VM(db-sg)에만 접속
+# 비밀값(SERVICE_TOKEN, DB_PASSWORD, DEMO_PASSWORD)은 Secret bank-core-api로만 넣음 (SEC-01)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-api
+  labels: { app: durian-bank-core-api }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: durian-bank-core-api }
+  template:
+    metadata:
+      labels: { app: durian-bank-core-api }
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: core-api
+          image: durian-bank-core-api
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - configMapRef: { name: bank-core-api-config }
+            - secretRef: { name: bank-core-api }
+          readinessProbe:
+            httpGet: { path: /health, port: 4000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 4000 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 96Mi }
+            limits: { cpu: 300m, memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+---
+# AWS 웹이 Tailscale로 들어오는 입구. MetalLB 주소 하나만 쓰고, 이 주소/32만 서브넷 라우트로 광고 (방화벽 정의서 7.4)
+# externalTrafficPolicy: Local → 출발지 주소(서브넷 라우터 워커)가 그대로 보여서 NetworkPolicy로 거를 수 있음
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-api
+  labels: { app: durian-bank-core-api }
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: 10.30.20.200
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector: { app: durian-bank-core-api }
+  ports:
+    - { name: http, port: 4000, targetPort: 4000 }

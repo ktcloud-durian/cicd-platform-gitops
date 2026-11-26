@@ -1,0 +1,23 @@
+# AWS k3s: 두리안뱅크 web. ArgoCD(AWS)가 이 폴더를 봄
+# 배포 전에 바꿀 것 2개 (값이 정해지기 전에는 Sync 하지 않음):
+#   1) core-api 주소: 지금은 MetalLB 풀(10.30.20.192/27) 안의 제안값 10.30.20.200.
+#      바뀌면 이 파일 CORE_API_URL, networkpolicy.yaml ipBlock, onprem/core-api.yaml 세 곳을 같이 바꿈 (동경님)
+#   2) images newTag → bank-release.yml이 커밋 SHA로 자동 갱신
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: durian-bank
+resources:
+  - namespace.yaml
+  - web.yaml
+  - networkpolicy.yaml
+configMapGenerator:
+  - name: bank-web-config
+    literals:
+      - CORE_API_URL=http://10.30.20.200:4000
+      - SERVED_FROM=AWS 서울 리전
+      - SHOW_BREACH_BANNER=false
+      - TRUST_PROXY_HOPS=2
+images:
+  - name: durian-bank-web
+    newName: ghcr.io/ktcloud-durian/durian-bank-web
+    newTag: e7b69fe
