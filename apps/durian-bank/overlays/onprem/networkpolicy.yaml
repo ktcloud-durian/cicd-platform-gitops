@@ -7,7 +7,7 @@ spec:
   podSelector: {}
   policyTypes: ["Ingress", "Egress"]
 ---
-# 수신: 내부 노드 대역, 확인된 AWS 워커 A와 웹 실행 마스터 A·C의 VPN 주소에서 4000번만 허용
+# 수신: 내부 노드 대역과 확인된 AWS 마스터 A·C, 워커 A·C의 VPN 주소에서 4000번만 허용
 # AWS 요청은 출발지 VPN 주소가 유지될 수 있으므로 노드 주소로 변환된다고 가정하지 않음
 # AWS 노드 교체 또는 웹 실행 위치 변경 시 출발지 VPN 단일 주소를 검토 후 갱신
 # 서비스 토큰이 없으면 core-api가 401로 거절함 (DAT-05)
@@ -25,6 +25,7 @@ spec:
         - ipBlock: { cidr: 100.127.211.121/32 }
         - ipBlock: { cidr: 100.103.106.63/32 }
         - ipBlock: { cidr: 100.65.116.26/32 }
+        - ipBlock: { cidr: 100.98.146.108/32 }
       ports:
         - { protocol: TCP, port: 4000 }
 ---
