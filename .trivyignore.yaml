@@ -1,0 +1,5 @@
+# Trivy 예외 (보안 기준서 7.1: 예외 대장 번호 + 만료일 필수)
+misconfigurations:
+  - id: KSV-0125
+    statement: "EX-06 이미지 저장소는 GHCR(ghcr.io/ktcloud-durian)로 승인됨. Trivy 기본 신뢰 목록에 ghcr.io가 없어서 예외"
+    expired_at: 2026-12-05
