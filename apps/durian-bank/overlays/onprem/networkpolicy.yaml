@@ -7,7 +7,9 @@ spec:
   podSelector: {}
   policyTypes: ["Ingress", "Egress"]
 ---
-# 들어오는 것: k3s 노드 대역(Tailscale 서브넷 라우터 워커가 출발지를 자기 주소로 바꿔서 들어옴)에서 4000번만
+# 수신: 내부 노드 대역과 확인된 AWS 워커 VPN 주소에서 4000번만 허용
+# AWS 요청은 출발지 VPN 주소가 유지될 수 있으므로 노드 주소로 변환된다고 가정하지 않음
+# 워커 교체로 VPN 주소가 바뀌면 검토 후 이 단일 주소도 갱신
 # 서비스 토큰이 없으면 core-api가 401로 거절함 (DAT-05)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -20,6 +22,7 @@ spec:
   ingress:
     - from:
         - ipBlock: { cidr: 10.30.20.0/24 }
+        - ipBlock: { cidr: 100.127.211.121/32 }
       ports:
         - { protocol: TCP, port: 4000 }
 ---
