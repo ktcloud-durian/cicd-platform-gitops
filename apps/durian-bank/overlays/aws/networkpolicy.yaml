@@ -25,8 +25,8 @@ spec:
       ports:
         - { protocol: TCP, port: 3000 }
 ---
-# 나가는 것: DNS + 온프렘 core-api 주소 하나(4000)만. 고객 DB 3306으로는 못 나감 (DAT-04)
-# core-api MetalLB 주소/32 (방화벽 정책 정의서 10.1 3번). 바꾸면 kustomization.yaml CORE_API_URL도 같이
+# 나가는 것: DNS + 온프렘 A/B core-api 주소(4000)만. 고객 DB 3306으로는 못 나감 (DAT-04)
+# core-api A/B MetalLB 주소/32. 현재 CORE_API_URL은 A 유지, B 접근 허용은 장애 전환 준비용.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -46,5 +46,6 @@ spec:
         - { protocol: TCP, port: 53 }
     - to:
         - ipBlock: { cidr: 10.30.20.200/32 }
+        - ipBlock: { cidr: 10.31.20.200/32 }
       ports:
         - { protocol: TCP, port: 4000 }
