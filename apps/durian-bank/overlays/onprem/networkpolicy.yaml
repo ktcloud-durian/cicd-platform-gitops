@@ -22,10 +22,10 @@ spec:
   ingress:
     - from:
         - ipBlock: { cidr: 10.30.20.0/24 }
-        - ipBlock: { cidr: 100.127.211.121/32 }
+        - ipBlock: { cidr: 100.83.143.115/32 }
         - ipBlock: { cidr: 100.103.106.63/32 }
         - ipBlock: { cidr: 100.65.116.26/32 }
-        - ipBlock: { cidr: 100.98.146.108/32 }
+        - ipBlock: { cidr: 100.114.163.95/32 }
       ports:
         - { protocol: TCP, port: 4000 }
 ---
